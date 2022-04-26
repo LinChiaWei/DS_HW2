@@ -37,23 +37,19 @@ if __name__ == '__main__':
     test = pd.read_csv(args.testing,header=None)
     train = train.set_axis(['open','high','low','close'],axis=1,inplace=False)
     test = test.set_axis(['open','high','low','close'],axis=1,inplace=False)
+    data = pd.concat([train,test],axis=0)
+    data.reset_index(inplace=True,drop=True)
     ###
 
     ### give data corresponding date
-    df = pd.date_range('2018/03/28','2022/04/23')
-    df2 = pd.date_range('2022/04/24','2022/05/13')
+    df = pd.date_range(start='2018/03/28',periods=len(data))
     df.format(formatter=lambda x: x.strftime('%Y%m%d'))
-    df2.format(formatter=lambda x: x.strftime('%Y%m%d'))
-    train['date']=df
-    test['date']=df2
-    train_len = len(df)
+    data['date'] = df
+    test_start = data['date'][(len(data)-20)]
+    data.index = data.date
+    df = data
     ###
  
-    data = pd.concat([train,test],axis=0)
-    data.reset_index(inplace=True,drop=True)
-    df = data
-    df.index = df.date
-
     ### calculate features
     def relative_strength_idx(df,n=14):
         open = df['open']
@@ -89,8 +85,8 @@ if __name__ == '__main__':
     df['y'] = df['open'].shift(-1)
     df = df.dropna(axis=0).reset_index(drop=True)
 
-    df_train = df[df.date<="2022-04-23"]
-    df_valid = df[df.date>"2022-04-23"]
+    df_train = df[df.date<test_start]
+    df_valid = df[df.date>=test_start]
     ###
 
     features = ['SMA_3','SMA_7','SMA_30','EMA_3','EMA_7','EMA_30','RSI','MACD','MACD_signal']
